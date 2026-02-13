@@ -1,4 +1,9 @@
 
+# m1b
+- Use speech synthesis to read a word when the user enter a space
+  - Also read the word when the user type a punctuation mark, but then don't read it again when the user press space
+- Read the whole entry when the user press "enter"
+
 # m1a
 - start with index.html
   - it should accept a query param called user_id

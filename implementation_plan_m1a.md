@@ -28,9 +28,19 @@ The m1a feature for the Daily Diary has been implemented with a focus on a premi
 - `style.css`: The styling system, including responsive layouts and glassmorphism.
 - `script.js`: Logic for data handling, time period calculations, and DOM manipulation.
 
+## m1b: Speech Synthesis Integration
+
+1.  **Context-Aware Narration**: The application uses the Web Speech API to read out words based on user input:
+    *   **Serious British Voice**: The narration uses a high-quality British male voice (e.g., "Google UK English Male" or "Daniel") with a refined rate and pitch for a thoughtful, serious tone.
+    *   **Space Trigger**: Reads the last typed word when the **Space** bar is pressed.
+    *   **Punctuation Trigger**: Reads the word immediately when a punctuation mark (`.`, `,`, `!`, `?`, `;`, `:`) is typed, including the mark itself.
+    *   **Duplicate Prevention**: Smart logic ensures that if a word was already narrated due to a punctuation mark, pressing **Space** immediately afterward will not repeat the narration.
+2.  **Full Entry Narration**: Upon pressing **Enter**, the application narrates the entire diary entry before saving it.
+3.  **Auditory Feedback**: This provides immediate auditory confirmation of what is being recorded, enhancing the journaling experience.
+
 ## How to Use
 
 1.  Open `index.html` in a browser.
 2.  (Optional) Add `?user_id=YourName` to the URL.
 3.  Type your thoughts in the right panel.
-4.  Press **Enter** to save your entry instantly to the left panel.
+4.  Press **Space** to hear your last word or **Enter** to save (and hear) the whole entry.

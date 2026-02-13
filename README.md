@@ -1,4 +1,14 @@
 
+# m1c
+Internally, let's have 3 modes
+- New mode, which is the current mode for creating new posts
+- View mode, which removes the right panel, but still display the entries
+  - This mode is entered when user press "Esc" from the other modes
+  - In this mode, the user can navigate through the entries using the arrow keys, with the top entry being selected, (or the same entry that was selected when the user entered the view mode if it was in edit mode)
+- Edit mode, which allows editing of a specific entry
+  - This mode is entered when user press "Enter" from the view mode, in which case it will open up a textarea like the new mode but with the entry's text pre-filled.
+  - All the other textarea functionalities should be the same as the new mode
+    - When the user press "Enter" from the edit mode, it should save the entry and return to the view mode, with the same entry selected.
 
 # m1b
 - Use speech synthesis to read a word when the user enter a space

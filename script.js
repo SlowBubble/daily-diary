@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         userTitle.textContent = 'My diary';
     }
 
+    const appContainer = document.querySelector('.app-container');
+
     // Load entries
     let diaryData = { entries: [] };
     const stored = localStorage.getItem(storageKey);
@@ -25,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to parse storage', e);
         }
     }
+
+    let currentMode = 'NEW'; // 'NEW', 'VIEW', 'EDIT'
+    let selectedEntryIndex = -1; // Index in reversed list
+    let originalEditIndex = -1; // Index in original array
+    let lastSpokenText = "";
 
     function getTimePeriod(date) {
         const hours = date.getHours();
@@ -59,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             utterance.lang = 'en-GB';
         }
 
-        utterance.rate = 0.9; // Slightly slower for a more serious tone
-        utterance.pitch = 0.8; // Slightly lower pitch for a more serious tone
+        utterance.rate = 0.9;
+        utterance.pitch = 0.8;
         window.speechSynthesis.speak(utterance);
     }
 
@@ -73,16 +80,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getOrdinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function getSpeechDate(date) {
+        const period = getTimePeriod(date).toLowerCase();
+        const weekday = date.toLocaleDateString(undefined, { weekday: 'long' });
+        const month = date.toLocaleDateString(undefined, { month: 'long' });
+        const day = date.getDate();
+        return `Written on the ${period} of ${weekday}, ${month} ${getOrdinal(day)}.`;
+    }
+
     function renderEntries() {
         entriesList.innerHTML = '';
         const sortedEntries = [...diaryData.entries].reverse();
 
-        sortedEntries.forEach(entry => {
+        sortedEntries.forEach((entry, index) => {
             const date = new Date(entry.timestamp);
             const period = getTimePeriod(date);
 
             const entryDiv = document.createElement('div');
             entryDiv.className = 'entry-card';
+            if (currentMode === 'VIEW' && index === selectedEntryIndex) {
+                entryDiv.classList.add('selected');
+                // Ensure the selected entry is visible
+                setTimeout(() => {
+                    entryDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 0);
+            }
 
             entryDiv.innerHTML = `
                 <div class="entry-subheader">
@@ -96,9 +124,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    let lastSpokenText = "";
+    function setMode(mode, entryIndex = -1) {
+        currentMode = mode;
+        appContainer.classList.remove('view-mode');
+
+        if (mode === 'VIEW') {
+            appContainer.classList.add('view-mode');
+            diaryInput.blur();
+            if (entryIndex !== -1) {
+                selectedEntryIndex = entryIndex;
+            } else if (selectedEntryIndex === -1) {
+                selectedEntryIndex = 0;
+            }
+            renderEntries();
+        } else if (mode === 'NEW') {
+            selectedEntryIndex = -1;
+            originalEditIndex = -1;
+            diaryInput.value = '';
+            renderEntries();
+            diaryInput.focus();
+        } else if (mode === 'EDIT') {
+            const sortedEntries = [...diaryData.entries].reverse();
+            const entry = sortedEntries[selectedEntryIndex];
+            if (entry) {
+                diaryInput.value = entry.text;
+                originalEditIndex = diaryData.entries.indexOf(entry);
+                diaryInput.focus();
+            }
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (currentMode === 'VIEW') {
+                setMode('NEW');
+            } else {
+                setMode('VIEW');
+            }
+            return;
+        }
+
+        if (currentMode === 'VIEW') {
+            const sortedEntries = [...diaryData.entries].reverse();
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (selectedEntryIndex < sortedEntries.length - 1) {
+                    selectedEntryIndex++;
+                    renderEntries();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (selectedEntryIndex > 0) {
+                    selectedEntryIndex--;
+                    renderEntries();
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (sortedEntries.length > 0) {
+                    setMode('EDIT');
+                }
+            } else if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                const entry = sortedEntries[selectedEntryIndex];
+                if (entry) {
+                    const speechDate = getSpeechDate(new Date(entry.timestamp));
+                    speak(`${entry.text} ${speechDate}`);
+                }
+            }
+        }
+    });
 
     diaryInput.addEventListener('keydown', (e) => {
+        // Only handle typing logic if in NEW or EDIT mode
+        if (currentMode === 'VIEW') return;
+
         const punctuation = ['.', ',', '!', '?', ';', ':'];
         const text = diaryInput.value;
         const cursorPos = diaryInput.selectionStart;
@@ -130,23 +229,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (fullText) {
                 speak(fullText);
-                const newEntry = {
-                    timestamp: new Date().toISOString(),
-                    text: fullText
-                };
+                if (currentMode === 'EDIT' && originalEditIndex !== -1) {
+                    diaryData.entries[originalEditIndex].text = fullText;
+                    localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                    const currentSelected = selectedEntryIndex;
+                    setMode('VIEW', currentSelected);
+                } else {
+                    const newEntry = {
+                        timestamp: new Date().toISOString(),
+                        text: fullText
+                    };
+                    diaryData.entries.push(newEntry);
+                    localStorage.setItem(storageKey, JSON.stringify(diaryData));
 
-                diaryData.entries.push(newEntry);
-                localStorage.setItem(storageKey, JSON.stringify(diaryData));
-
-                diaryInput.value = '';
-                lastSpokenText = ""; // Reset for next entry
-                renderEntries();
-
-                // Optional: Scroll to top of list
-                entriesList.scrollTop = 0;
+                    diaryInput.value = '';
+                    lastSpokenText = "";
+                    renderEntries();
+                    entriesList.scrollTop = 0;
+                }
             }
         }
     });
 
-    renderEntries();
+    setMode('NEW');
 });

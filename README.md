@@ -1,4 +1,5 @@
 
+
 # m1b
 - Use speech synthesis to read a word when the user enter a space
   - Also read the word when the user type a punctuation mark, but then don't read it again when the user press space

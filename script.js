@@ -1,13 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user_id') || 'Nameless';
+    const rawUserId = urlParams.get('user_id');
+    const userIdParam = rawUserId ? rawUserId.trim() : null;
+    const userId = userIdParam || 'Nameless';
     const storageKey = `diary_${userId}`;
 
     const userTitle = document.getElementById('user-title');
     const entriesList = document.getElementById('entries-list');
     const diaryInput = document.getElementById('diary-input');
 
-    userTitle.textContent = `${userId}'s Diary`;
+    if (userIdParam) {
+        userTitle.textContent = `${userIdParam}'s Diary`;
+    } else {
+        userTitle.textContent = 'My diary';
+    }
 
     // Load entries
     let diaryData = { entries: [] };

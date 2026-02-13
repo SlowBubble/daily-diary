@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedEntryIndex = -1; // Index in reversed list
     let originalEditIndex = -1; // Index in original array
     let lastSpokenText = "";
+    let speechTimeout = null;
 
     function getTimePeriod(date) {
         const hours = date.getHours();
@@ -41,9 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'Night';
     }
 
-    function speak(text) {
+    function speak(text, callback) {
         if (!text) return;
         window.speechSynthesis.cancel();
+        if (speechTimeout) {
+            clearTimeout(speechTimeout);
+            speechTimeout = null;
+        }
+
         const utterance = new SpeechSynthesisUtterance(text);
 
         const voices = window.speechSynthesis.getVoices();
@@ -68,6 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         utterance.rate = 0.9;
         utterance.pitch = 0.8;
+
+        if (callback) {
+            utterance.onend = callback;
+        }
+
         window.speechSynthesis.speak(utterance);
     }
 
@@ -188,7 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const entry = sortedEntries[selectedEntryIndex];
                 if (entry) {
                     const speechDate = getSpeechDate(new Date(entry.timestamp));
-                    speak(`${entry.text} ${speechDate}`);
+                    speak(entry.text, () => {
+                        speechTimeout = setTimeout(() => {
+                            speak(speechDate);
+                            speechTimeout = null;
+                        }, 400);
+                    });
                 }
             }
         }

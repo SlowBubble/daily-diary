@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 entryDiv.classList.add('selected');
                 // Ensure the selected entry is visible
                 setTimeout(() => {
-                    entryDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    entryDiv.scrollIntoView({ behavior: 'instant', block: 'nearest' });
                 }, 0);
             }
 

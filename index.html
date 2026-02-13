@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Diary</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="left-panel">
+            <header class="diary-header">
+                <h1 id="user-title">Nameless's Diary</h1>
+            </header>
+            <div id="entries-list" class="entries-list">
+                <!-- Entries will be injected here -->
+            </div>
+        </aside>
+        
+        <main class="right-panel">
+            <div class="input-container">
+                <textarea id="diary-input" placeholder="What's on your mind? (Press Enter to save)"></textarea>
+                <div class="input-hint">Press Enter to capture this moment</div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

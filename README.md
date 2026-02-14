@@ -1,4 +1,8 @@
 
+# m1d
+- In view mode, when pressing space to utter the entry, also add:
+  - when the utterance finish, select the next entry.
+
 # m1c
 Internally, let's have 3 modes
 - New mode, which is the current mode for creating new posts

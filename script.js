@@ -201,7 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const speechDate = getSpeechDate(new Date(entry.timestamp));
                     speak(entry.text, () => {
                         speechTimeout = setTimeout(() => {
-                            speak(speechDate);
+                            speak(speechDate, () => {
+                                if (selectedEntryIndex < sortedEntries.length - 1) {
+                                    selectedEntryIndex++;
+                                    renderEntries();
+                                }
+                            });
                             speechTimeout = null;
                         }, 400);
                     });

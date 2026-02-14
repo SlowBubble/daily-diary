@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             });
                             speechTimeout = null;
-                        }, 400);
+                        }, 230);
                     });
                 }
             }
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         });
                         speechTimeout = null;
-                    }, 400);
+                    }, 230);
                 });
 
                 if (currentMode === 'EDIT' && originalEditIndex !== -1) {

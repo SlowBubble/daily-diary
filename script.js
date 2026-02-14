@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMode = 'NEW'; // 'NEW', 'VIEW', 'EDIT'
     let selectedEntryIndex = -1; // Index in reversed list
     let originalEditIndex = -1; // Index in original array
-    let lastSpokenText = "";
+    let lastSpokenText = ""; // Track the last word spoken to prevent immediate repeats
     let speechTimeout = null;
 
     function getTimePeriod(date) {
@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function setMode(mode, entryIndex = -1) {
         currentMode = mode;
         appContainer.classList.remove('view-mode');
+        lastSpokenText = "";
 
         if (mode === 'VIEW') {
             appContainer.classList.add('view-mode');
@@ -238,9 +239,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle Punctuation
         if (punctuation.includes(e.key)) {
             const wordWithPunct = currentWord + e.key;
-            speak(wordWithPunct);
-            lastSpokenText = wordWithPunct;
+            if (wordWithPunct !== lastSpokenText) {
+                speak(wordWithPunct);
+                lastSpokenText = wordWithPunct;
+            }
             return;
+        }
+
+        // Reset speech memory for any other key (backspace, letters, etc.)
+        // but ignore modifier keys so they don't trigger a re-read
+        if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) {
+            lastSpokenText = "";
         }
 
         // Handle Enter

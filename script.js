@@ -249,7 +249,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const fullText = diaryInput.value.trim();
 
             if (fullText) {
-                speak(fullText);
+                let speechDate;
+                let newTimestamp = null;
+                if (currentMode === 'EDIT' && originalEditIndex !== -1) {
+                    speechDate = getSpeechDate(new Date(diaryData.entries[originalEditIndex].timestamp));
+                } else {
+                    newTimestamp = new Date().toISOString();
+                    speechDate = getSpeechDate(new Date(newTimestamp));
+                }
+
+                speak(fullText, () => {
+                    speechTimeout = setTimeout(() => {
+                        speak(speechDate, () => {
+                            if (currentMode === 'VIEW') {
+                                const sortedEntries = [...diaryData.entries].reverse();
+                                if (selectedEntryIndex < sortedEntries.length - 1) {
+                                    selectedEntryIndex++;
+                                    renderEntries();
+                                }
+                            }
+                        });
+                        speechTimeout = null;
+                    }, 400);
+                });
+
                 if (currentMode === 'EDIT' && originalEditIndex !== -1) {
                     diaryData.entries[originalEditIndex].text = fullText;
                     localStorage.setItem(storageKey, JSON.stringify(diaryData));
@@ -257,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     setMode('VIEW', currentSelected);
                 } else {
                     const newEntry = {
-                        timestamp: new Date().toISOString(),
+                        timestamp: newTimestamp,
                         text: fullText
                     };
                     diaryData.entries.push(newEntry);

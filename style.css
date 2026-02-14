@@ -80,7 +80,7 @@ body {
 }
 
 .entry-text {
-  font-size: 1.05rem;
+  font-size: 2.1rem;
   line-height: 1.6;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -111,7 +111,7 @@ textarea {
   border-radius: 16px;
   outline: none;
   color: var(--text-primary);
-  font-size: 1.4rem;
+  font-size: 2.8rem;
   line-height: 1.6;
   font-family: 'Inter', sans-serif;
   resize: none;

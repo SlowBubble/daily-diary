@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const entriesList = document.getElementById('entries-list');
     const diaryInput = document.getElementById('diary-input');
 
-    if (userIdParam) {
-        userTitle.textContent = `${userIdParam}'s Diary`;
-    } else {
-        userTitle.textContent = 'My diary';
+    function updateHeader() {
+        const count = diaryData.entries.length;
+        const baseTitle = userIdParam ? `${userIdParam}'s Diary` : 'My diary';
+        userTitle.textContent = `${baseTitle} (${count} posts)`;
     }
 
     const appContainer = document.querySelector('.app-container');
@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to parse storage', e);
         }
     }
+
+    updateHeader();
 
     let currentMode = 'NEW'; // 'NEW', 'VIEW', 'EDIT'
     let selectedEntryIndex = -1; // Index in reversed list
@@ -294,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     diaryData.entries.push(newEntry);
                     localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                    updateHeader();
 
                     diaryInput.value = '';
                     lastSpokenText = "";

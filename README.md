@@ -1,4 +1,9 @@
 
+# m2a
+- In the view mode, if the user press "s", take the user to the stats page.
+- Create a stats.html page
+  - Display a line chart where x-axis is the date (based on the timestamp number, but just marked the x-axis the start of each day) and y-axis is the cumulative number of entries.
+
 # m1d
 - In view mode, when pressing space to utter the entry, also add:
   - when the utterance finish, select the next entry.

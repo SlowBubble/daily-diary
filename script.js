@@ -214,6 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 230);
                     });
                 }
+            } else if (e.key === 's') {
+                window.location.href = `stats.html${window.location.search}`;
             }
         }
     });

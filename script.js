@@ -464,5 +464,5 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
         }
     });
 
-    setMode('NEW');
+    setMode(diaryData.entries.length > 0 ? 'VIEW' : 'NEW');
 });

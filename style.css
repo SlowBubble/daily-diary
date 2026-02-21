@@ -57,7 +57,41 @@ body {
 .entries-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+}
+
+.date-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 4rem 0 2rem;
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-family: 'Outfit', sans-serif;
+  opacity: 0.8;
+}
+
+.date-divider::before,
+.date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-color) 20%, var(--border-color) 80%, transparent);
+}
+
+.date-divider:not(:empty)::before {
+  margin-right: 2rem;
+}
+
+.date-divider:not(:empty)::after {
+  margin-left: 2rem;
+}
+
+.entries-list> :first-child.date-divider {
+  margin-top: 0;
 }
 
 .entry-card {
@@ -76,7 +110,6 @@ body {
   color: var(--accent-color);
   margin-bottom: 0.75rem;
   display: flex;
-  justify-content: space-between;
 }
 
 .entry-text {

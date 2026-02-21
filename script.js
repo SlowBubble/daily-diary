@@ -110,10 +110,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderEntries() {
         entriesList.innerHTML = '';
         const sortedEntries = [...diaryData.entries].reverse();
+        let lastDateStr = null;
 
         sortedEntries.forEach((entry, index) => {
             const date = new Date(entry.timestamp);
+            const dateStr = formatDate(date);
             const period = getTimePeriod(date);
+
+            if (dateStr !== lastDateStr) {
+                const divider = document.createElement('div');
+                divider.className = 'date-divider';
+                divider.textContent = dateStr;
+                entriesList.appendChild(divider);
+                lastDateStr = dateStr;
+            }
 
             const entryDiv = document.createElement('div');
             entryDiv.className = 'entry-card';
@@ -127,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             entryDiv.innerHTML = `
                 <div class="entry-subheader">
-                    <span>${formatDate(date)}</span>
                     <span>${period}</span>
                 </div>
                 <div class="entry-text">${entry.text}</div>

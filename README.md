@@ -1,6 +1,7 @@
 # m3c
-- add a ?canto=1 query param to display the canto text instead of the english text.
+- handle ?canto=1 query param to display the canto text instead of the english text.
   - also use a Cantonese voice to read the canto text, as well as reading out the time of day in cantonese.
+- toggle the display of canto text vs english text using the keyboard "c" in view mode.
 
 # m3b
 - add console.log for the llm generation so I can see if it's working properly.

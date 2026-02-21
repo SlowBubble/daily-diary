@@ -90,6 +90,7 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
     let originalEditIndex = -1; // Index in original array
     let lastSpokenText = ""; // Track the last word spoken to prevent immediate repeats
     let speechTimeout = null;
+    let cantoMode = urlParams.get('canto') === '1';
 
     function getTimePeriod(date) {
         const hours = date.getHours();
@@ -99,7 +100,7 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
         return 'Night';
     }
 
-    function speak(text, callback) {
+    function speak(text, callback = null, isCanto = false) {
         if (!text) return;
         window.speechSynthesis.cancel();
         if (speechTimeout) {
@@ -110,7 +111,12 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
         const utterance = new SpeechSynthesisUtterance(text);
 
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoices = [
+        const preferredVoices = isCanto ? [
+            'Sin-Ji',
+            'Google 粵語',
+            'Hong Kong',
+            'zh-HK'
+        ] : [
             'Google UK English Male',
             'Daniel',
             'English (United Kingdom)'
@@ -126,11 +132,11 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
             utterance.voice = selectedVoice;
         } else {
             // Fallback for lang
-            utterance.lang = 'en-GB';
+            utterance.lang = isCanto ? 'zh-HK' : 'en-GB';
         }
 
         utterance.rate = 0.9;
-        utterance.pitch = 0.8;
+        utterance.pitch = isCanto ? 1.0 : 0.8;
 
         if (callback) {
             utterance.onend = callback;
@@ -154,7 +160,21 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
         return n + (s[(v - 20) % 10] || s[v] || s[0]);
     }
 
-    function getSpeechDate(date) {
+    function getSpeechDate(date, forceCanto = false) {
+        const isCanto = forceCanto || cantoMode;
+        if (isCanto) {
+            const periodMap = {
+                'Morning': '朝早',
+                'Afternoon': '下晝',
+                'Evening': '夜晚',
+                'Night': '深夜'
+            };
+            const period = periodMap[getTimePeriod(date)];
+            const weekday = date.toLocaleDateString('zh-HK', { weekday: 'long' });
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `喺${month}月${day}日${weekday}嘅${period}寫嘅。`;
+        }
         const period = getTimePeriod(date).toLowerCase();
         const weekday = date.toLocaleDateString(undefined, { weekday: 'long' });
         const month = date.toLocaleDateString(undefined, { month: 'long' });
@@ -194,8 +214,12 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 <span class="annotation-category category-${entry.annotations.category.toLowerCase()}">${entry.annotations.category}</span>
             ` : '';
 
+            const displayText = (cantoMode && entry.annotations && entry.annotations.canto)
+                ? entry.annotations.canto
+                : entry.text;
+
             entryDiv.innerHTML = `
-                <div class="entry-text">${entry.text}</div>
+                <div class="entry-text">${displayText}</div>
                 <div class="entry-footer">
                     ${categoryHtml}
                     <span class="period-toggle" title="Click to cycle period">${period}</span>
@@ -288,21 +312,32 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 e.preventDefault();
                 const entry = sortedEntries[selectedEntryIndex];
                 if (entry) {
-                    const speechDate = getSpeechDate(new Date(entry.timestamp));
-                    speak(entry.text, () => {
+                    const isCanto = cantoMode && entry.annotations && entry.annotations.canto;
+                    const textToSpeak = isCanto ? entry.annotations.canto : entry.text;
+                    const speechDate = getSpeechDate(new Date(entry.timestamp), isCanto);
+                    speak(textToSpeak, () => {
                         speechTimeout = setTimeout(() => {
                             speak(speechDate, () => {
                                 if (selectedEntryIndex < sortedEntries.length - 1) {
                                     selectedEntryIndex++;
                                     renderEntries();
                                 }
-                            });
+                            }, isCanto);
                             speechTimeout = null;
                         }, 230);
-                    });
+                    }, isCanto);
                 }
             } else if (e.key === 's') {
                 window.location.href = `stats.html${window.location.search}`;
+            } else if (e.key === 'c') {
+                cantoMode = !cantoMode;
+                const newParams = new URLSearchParams(window.location.search);
+                if (cantoMode) newParams.set('canto', '1');
+                else newParams.delete('canto');
+                const newQuery = newParams.toString();
+                const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+                window.history.replaceState({}, '', newUrl);
+                renderEntries();
             }
         }
     });
@@ -368,10 +403,10 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                                     renderEntries();
                                 }
                             }
-                        });
+                        }, cantoMode);
                         speechTimeout = null;
                     }, 230);
-                });
+                }, false);
 
                 if (currentMode === 'EDIT' && originalEditIndex !== -1) {
                     const entry = diaryData.entries[originalEditIndex];

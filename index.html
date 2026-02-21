@@ -18,6 +18,18 @@
         <aside class="left-panel">
             <header class="diary-header">
                 <h1 id="user-title">Nameless's Diary</h1>
+                <button id="annotate-btn" class="annotate-btn" title="Generate AI annotations for all entries">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                        <path d="M5 3v4" />
+                        <path d="M19 17v4" />
+                        <path d="M3 5h4" />
+                        <path d="M17 19h4" />
+                    </svg>
+                    Annotate
+                </button>
             </header>
             <div id="entries-list" class="entries-list">
                 <!-- Entries will be injected here -->
@@ -26,13 +38,13 @@
 
         <main class="right-panel">
             <div class="input-container">
-                <textarea id="diary-input" placeholder="What's on your mind? (Press Enter to save)"
+                <textarea id="diary-input" placeholder="What's on your mind? (Press Enter to capture)"
                     autofocus></textarea>
                 <div class="input-hint">Press Enter to capture this moment</div>
             </div>
         </main>
     </div>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

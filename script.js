@@ -1,3 +1,6 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-ai.js";
+
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const rawUserId = urlParams.get('user_id');
@@ -30,6 +33,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateHeader();
+
+    // Firebase & AI Init
+    const firebaseConfig = {
+        apiKey: "AIzaSyAAG4cgpGXTDFdKxCwxpEiIm0xsjKDdy3I",
+        authDomain: "diagram-flow.firebaseapp.com",
+        projectId: "diagram-flow",
+        storageBucket: "diagram-flow.firebasestorage.app",
+        messagingSenderId: "701657640541",
+        appId: "1:701657640541:web:fa9d373423f009c60627b4",
+        measurementId: "G-RJZ7XPTE4Z"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const ai = getAI(app, { backend: new GoogleAIBackend() });
+    const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+
+    async function annotateEntries() {
+        const annotateBtn = document.getElementById('annotate-btn');
+        if (!annotateBtn || annotateBtn.classList.contains('loading')) return;
+
+        const entriesToAnnotate = diaryData.entries.filter(e => !e.annotations);
+        if (entriesToAnnotate.length === 0) {
+            alert("All entries are already annotated!");
+            return;
+        }
+
+        annotateBtn.classList.add('loading');
+        annotateBtn.disabled = true;
+
+        try {
+            for (const entry of entriesToAnnotate) {
+                const prompt = `For the following diary entry, provide two annotations in JSON format: 
+1. "canto": A Cantonese translation of the entry.
+2. "category": One of "Meal", "Activity", "Thought", "Event", "Other". 
+   - Meal: Discussing what I ate or drank.
+   - Activity: Something I did.
+   - Event: Something that happened.
+
+Entry: "${entry.text}"
+
+Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
+
+                console.log(`[AI] Generating annotations for: "${entry.text}"`);
+                console.log(`[AI] Prompt:`, prompt);
+
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const responseText = response.text();
+
+                console.log(`[AI] Raw Response:`, responseText);
+
+                try {
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const annotations = JSON.parse(jsonMatch[0]);
+                        console.log(`[AI] Parsed Annotations:`, annotations);
+                        entry.annotations = annotations;
+                        localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                        renderEntries();
+                    }
+                } catch (e) {
+                    console.error("Failed to parse AI response", responseText, e);
+                }
+            }
+        } catch (err) {
+            console.error("AI annotation failed", err);
+            alert("Failed to generate annotations. This might be due to API limits or configuration.");
+        } finally {
+            annotateBtn.classList.remove('loading');
+            annotateBtn.disabled = false;
+        }
+    }
+
+    const annotateBtn = document.getElementById('annotate-btn');
+    if (annotateBtn) {
+        annotateBtn.addEventListener('click', annotateEntries);
+    }
 
     let currentMode = 'NEW'; // 'NEW', 'VIEW', 'EDIT'
     let selectedEntryIndex = -1; // Index in reversed list
@@ -136,9 +216,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 0);
             }
 
+            const categoryHtml = entry.annotations ? `
+                <span class="annotation-category category-${entry.annotations.category.toLowerCase()}">${entry.annotations.category}</span>
+            ` : '';
+
             entryDiv.innerHTML = `
                 <div class="entry-text">${entry.text}</div>
                 <div class="entry-footer">
+                    ${categoryHtml}
                     <span class="period-toggle" title="Click to cycle period">${period}</span>
                 </div>
             `;

@@ -45,13 +45,66 @@ body {
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
 }
 
+.diary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
 .diary-header h1 {
   font-family: 'Outfit', sans-serif;
   font-size: 2.25rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
   color: #0f172a;
   letter-spacing: -0.02em;
+  margin-bottom: 0;
+}
+
+.annotate-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 99px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);
+}
+
+.annotate-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3);
+}
+
+.annotate-btn:active {
+  transform: translateY(0);
+}
+
+.annotate-btn.loading {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.annotate-btn.loading svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .stats-link {
@@ -125,7 +178,9 @@ body {
   color: var(--accent-color);
   margin-top: 0.25rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
   opacity: 0.6;
   transition: opacity 0.2s;
 }
@@ -146,6 +201,43 @@ body {
 .period-toggle:hover {
   background-color: var(--accent-color);
   color: white;
+}
+
+.annotation-category {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.category-food {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.category-activity {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.category-thought {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.category-event {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.category-other {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .entry-text {

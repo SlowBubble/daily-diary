@@ -1,3 +1,33 @@
+# m3b
+- add console.log for the llm generation so I can see if it's working properly.
+
+# m3a
+- Add  a button to use LLM (firebase gemini call) to generate annotations for each entry (if not available) and store it in the entry by persisting it to local storage.
+- These are the annotations:
+  - chineseText: Convert the entry text into traditional chinese
+  - cateogry: Classify into "Food", "Activity", "Thought", "Event", "Other"; Activity is something I did and Event is something that happened.
+
+This is the firebase config you can use from my other project (I wonder if I can keep the current non-firebase app but use that part for gemini calls?):
+```
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAG4cgpGXTDFdKxCwxpEiIm0xsjKDdy3I",
+  authDomain: "diagram-flow.firebaseapp.com",
+  projectId: "diagram-flow",
+  storageBucket: "diagram-flow.firebasestorage.app",
+  messagingSenderId: "701657640541",
+  appId: "1:701657640541:web:fa9d373423f009c60627b4",
+  measurementId: "G-RJZ7XPTE4Z"
+};
+
+const app = initializeApp(firebaseConfig);
+```
+
+```
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+```
 
 # m2b
 - In stats, also add

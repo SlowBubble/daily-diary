@@ -136,10 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             entryDiv.innerHTML = `
-                <div class="entry-subheader">
+                <div class="entry-text">${entry.text}</div>
+                <div class="entry-footer">
                     <span class="period-toggle" title="Click to cycle period">${period}</span>
                 </div>
-                <div class="entry-text">${entry.text}</div>
             `;
 
             const periodToggle = entryDiv.querySelector('.period-toggle');

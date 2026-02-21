@@ -226,6 +226,16 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 </div>
             `;
 
+            entryDiv.addEventListener('click', () => {
+                if (currentMode === 'VIEW') {
+                    selectedEntryIndex = index;
+                    renderEntries();
+                } else if (currentMode === 'NEW' || currentMode === 'EDIT') {
+                    // Switch to view mode and select this entry
+                    setMode('VIEW', index);
+                }
+            });
+
             const periodToggle = entryDiv.querySelector('.period-toggle');
             periodToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -379,35 +389,19 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
         }
 
         // Handle Enter
+        if (e.key === 'Escape') {
+            e.stopPropagation();
+            setMode('VIEW');
+            return;
+        }
+
+        // Handle Enter
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
+            e.stopPropagation();
             const fullText = diaryInput.value.trim();
 
             if (fullText) {
-                let speechDate;
-                let newTimestamp = null;
-                if (currentMode === 'EDIT' && originalEditIndex !== -1) {
-                    speechDate = getSpeechDate(new Date(diaryData.entries[originalEditIndex].timestamp));
-                } else {
-                    newTimestamp = new Date().toISOString();
-                    speechDate = getSpeechDate(new Date(newTimestamp));
-                }
-
-                speak(fullText, () => {
-                    speechTimeout = setTimeout(() => {
-                        speak(speechDate, () => {
-                            if (currentMode === 'VIEW') {
-                                const sortedEntries = [...diaryData.entries].reverse();
-                                if (selectedEntryIndex < sortedEntries.length - 1) {
-                                    selectedEntryIndex++;
-                                    renderEntries();
-                                }
-                            }
-                        }, cantoMode);
-                        speechTimeout = null;
-                    }, 230);
-                }, false);
-
                 if (currentMode === 'EDIT' && originalEditIndex !== -1) {
                     const entry = diaryData.entries[originalEditIndex];
                     entry.text = fullText;
@@ -419,6 +413,16 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                     // Annotate asynchronously
                     annotateSingleEntry(entry);
                 } else {
+                    const newTimestamp = new Date().toISOString();
+                    const speechDate = getSpeechDate(new Date(newTimestamp));
+
+                    speak(fullText, () => {
+                        speechTimeout = setTimeout(() => {
+                            speak(speechDate, null, cantoMode);
+                            speechTimeout = null;
+                        }, 230);
+                    }, false);
+
                     const newEntry = {
                         timestamp: newTimestamp,
                         text: fullText
@@ -429,8 +433,9 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
 
                     diaryInput.value = '';
                     lastSpokenText = "";
-                    renderEntries();
-                    entriesList.scrollTop = 0;
+
+                    // Transition to VIEW mode and select the new entry (top of list)
+                    setMode('VIEW', 0);
                     // Annotate asynchronously
                     annotateSingleEntry(newEntry);
                 }

@@ -87,10 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const sortedDays = Object.keys(dailyStats).sort();
+  console.log('Daily stats grouped:', dailyStats);
   if (sortedDays.length === 0) return;
 
   const firstDayStr = sortedDays[0];
   const todayStr = new Date().toISOString().split('T')[0];
+  console.log('Timeline range:', firstDayStr, 'to', todayStr);
 
   const timelineLabels = [];
   const categoryLines = {};
@@ -131,6 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tempDate.setUTCDate(tempDate.getUTCDate() + 1);
   }
+
+  console.log('Processed Timeline Labels:', timelineLabels);
+  console.log('Cumulative Total Entries Line:', totalEntriesLine);
+  console.log('Cumulative Total Words Line:', totalWordsLine);
+  console.log('Category Lines:', categoryLines);
 
   // 2. MOST COMMON WORDS DATA
   const topWords = Object.entries(wordFreq)

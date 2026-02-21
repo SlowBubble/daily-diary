@@ -106,7 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
   categoriesFound.forEach(cat => { cumulativeCategories[cat] = 0; });
 
   // Use UTC dates to iterate through days reliably
-  let tempDate = new Date(firstDayStr + 'T00:00:00Z');
+  // Start one day before the first non-zero entry so line starts from origin
+  let entryStartDate = new Date(firstDayStr + 'T00:00:00Z');
+  let tempDate = new Date(entryStartDate);
+  tempDate.setUTCDate(tempDate.getUTCDate() - 1);
+
   const endDate = new Date(todayStr + 'T00:00:00Z');
 
   while (tempDate <= endDate) {

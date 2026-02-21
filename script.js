@@ -137,10 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             entryDiv.innerHTML = `
                 <div class="entry-subheader">
-                    <span>${period}</span>
+                    <span class="period-toggle" title="Click to cycle period">${period}</span>
                 </div>
                 <div class="entry-text">${entry.text}</div>
             `;
+
+            const periodToggle = entryDiv.querySelector('.period-toggle');
+            periodToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const d = new Date(entry.timestamp);
+                const hours = d.getHours();
+                let nextHour;
+
+                if (hours >= 5 && hours < 12) nextHour = 12;      // Morning -> Afternoon
+                else if (hours >= 12 && hours < 17) nextHour = 17; // Afternoon -> Evening
+                else if (hours >= 17 && hours < 21) nextHour = 21; // Evening -> Night
+                else nextHour = 5;                                 // Night -> Morning
+
+                d.setHours(nextHour, 0, 0, 0);
+                entry.timestamp = d.toISOString();
+                localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                renderEntries();
+            });
 
             entriesList.appendChild(entryDiv);
         });

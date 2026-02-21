@@ -49,22 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ai = getAI(app, { backend: new GoogleAIBackend() });
     const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
 
-    async function annotateEntries() {
-        const annotateBtn = document.getElementById('annotate-btn');
-        if (!annotateBtn || annotateBtn.classList.contains('loading')) return;
-
-        const entriesToAnnotate = diaryData.entries.filter(e => !e.annotations);
-        if (entriesToAnnotate.length === 0) {
-            alert("All entries are already annotated!");
-            return;
-        }
-
-        annotateBtn.classList.add('loading');
-        annotateBtn.disabled = true;
-
-        try {
-            for (const entry of entriesToAnnotate) {
-                const prompt = `For the following diary entry, provide two annotations in JSON format: 
+    async function annotateSingleEntry(entry) {
+        if (!entry || entry.annotations) return; // Guard clause
+        const prompt = `For the following diary entry, provide two annotations in JSON format: 
 1. "canto": A Cantonese translation of the entry.
 2. "category": One of "Meal", "Activity", "Thought", "Event", "Other". 
    - Meal: Discussing what I ate or drank.
@@ -75,40 +62,27 @@ Entry: "${entry.text}"
 
 Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
 
-                console.log(`[AI] Generating annotations for: "${entry.text}"`);
-                console.log(`[AI] Prompt:`, prompt);
+        console.log(`[AI] Generating annotations for: "${entry.text}"`);
+        console.log(`[AI] Prompt:`, prompt);
 
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const responseText = response.text();
+        try {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const responseText = response.text();
 
-                console.log(`[AI] Raw Response:`, responseText);
+            console.log(`[AI] Raw Response:`, responseText);
 
-                try {
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        const annotations = JSON.parse(jsonMatch[0]);
-                        console.log(`[AI] Parsed Annotations:`, annotations);
-                        entry.annotations = annotations;
-                        localStorage.setItem(storageKey, JSON.stringify(diaryData));
-                        renderEntries();
-                    }
-                } catch (e) {
-                    console.error("Failed to parse AI response", responseText, e);
-                }
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const annotations = JSON.parse(jsonMatch[0]);
+                console.log(`[AI] Parsed Annotations:`, annotations);
+                entry.annotations = annotations;
+                localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                renderEntries();
             }
-        } catch (err) {
-            console.error("AI annotation failed", err);
-            alert("Failed to generate annotations. This might be due to API limits or configuration.");
-        } finally {
-            annotateBtn.classList.remove('loading');
-            annotateBtn.disabled = false;
+        } catch (e) {
+            console.error("AI annotation failed", e);
         }
-    }
-
-    const annotateBtn = document.getElementById('annotate-btn');
-    if (annotateBtn) {
-        annotateBtn.addEventListener('click', annotateEntries);
     }
 
     let currentMode = 'NEW'; // 'NEW', 'VIEW', 'EDIT'
@@ -400,10 +374,15 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 });
 
                 if (currentMode === 'EDIT' && originalEditIndex !== -1) {
-                    diaryData.entries[originalEditIndex].text = fullText;
+                    const entry = diaryData.entries[originalEditIndex];
+                    entry.text = fullText;
+                    // Reset annotations on edit
+                    delete entry.annotations;
                     localStorage.setItem(storageKey, JSON.stringify(diaryData));
                     const currentSelected = selectedEntryIndex;
                     setMode('VIEW', currentSelected);
+                    // Annotate asynchronously
+                    annotateSingleEntry(entry);
                 } else {
                     const newEntry = {
                         timestamp: newTimestamp,
@@ -417,6 +396,8 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                     lastSpokenText = "";
                     renderEntries();
                     entriesList.scrollTop = 0;
+                    // Annotate asynchronously
+                    annotateSingleEntry(newEntry);
                 }
             }
         }

@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const daysActiveEl = document.getElementById('days-active');
   const avgEntriesEl = document.getElementById('avg-entries');
 
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      console.log('Escape pressed, navigating back to diary');
+      window.location.href = `index.html${window.location.search}`;
+    }
+  });
+
   // Update back link with user_id
   backLink.href = `index.html${window.location.search}`;
 
@@ -185,12 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
         x: { beginAtZero: true, ticks: { stepSize: 1 } },
         y: { grid: { display: false } }
       }
-    }
-  });
-
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      window.location.href = `index.html${window.location.search}`;
     }
   });
 });

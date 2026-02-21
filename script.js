@@ -348,6 +348,27 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
                 window.history.replaceState({}, '', newUrl);
                 renderEntries();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                const entry = sortedEntries[selectedEntryIndex];
+                if (entry && confirm(`Delete this entry: "${entry.text.substring(0, 30)}${entry.text.length > 30 ? '...' : ''}"?`)) {
+                    const originalIndex = diaryData.entries.indexOf(entry);
+                    if (originalIndex !== -1) {
+                        diaryData.entries.splice(originalIndex, 1);
+                        localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                        updateHeader();
+
+                        if (selectedEntryIndex >= diaryData.entries.length && selectedEntryIndex > 0) {
+                            selectedEntryIndex--;
+                        }
+                        if (diaryData.entries.length === 0) {
+                            selectedEntryIndex = -1;
+                            setMode('NEW');
+                        } else {
+                            renderEntries();
+                        }
+                    }
+                }
             }
         }
     });

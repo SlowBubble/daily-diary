@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const entries = diaryData.entries || [];
   if (entries.length === 0) {
-    // Show empty state if needed
     totalEntriesEl.textContent = '0';
     daysActiveEl.textContent = '0';
     avgEntriesEl.textContent = '0';
@@ -40,128 +39,145 @@ document.addEventListener('DOMContentLoaded', () => {
   // Sort entries by timestamp
   entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  // Group by day and calculate cumulative total
+  // 1. TIMELINE DATA
   const dayCounts = {};
   entries.forEach(entry => {
     const date = new Date(entry.timestamp);
-    const dayStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const dayStr = date.toISOString().split('T')[0];
     dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1;
   });
-
   const sortedDays = Object.keys(dayCounts).sort();
-
-  // Fill in gaps between first entry and today
   const firstDay = new Date(sortedDays[0]);
-  const lastDay = new Date(); // include today
-  const labels = [];
-  const counts = [];
+  const lastDay = new Date();
+  const timelineLabels = [];
+  const timelineCounts = [];
   let cumulative = 0;
-
   let tempDate = new Date(firstDay);
-  // Ensure we reset time part to compare correctly
   tempDate.setHours(0, 0, 0, 0);
   const end = new Date(lastDay);
   end.setHours(0, 0, 0, 0);
-
   while (tempDate <= end) {
     const dayStr = tempDate.toISOString().split('T')[0];
     cumulative += (dayCounts[dayStr] || 0);
-
-    // Format label for display
-    const displayLabel = tempDate.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric'
-    });
-
-    labels.push(displayLabel);
-    counts.push(cumulative);
-
+    timelineLabels.push(tempDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    timelineCounts.push(cumulative);
     tempDate.setDate(tempDate.getDate() + 1);
   }
 
-  // Update mini cards
+  // 2. WORD COUNT HISTOGRAM DATA (max 10 words)
+  const wordCountBins = new Array(11).fill(0); // 0, 1, 2, ..., 10+
+  const wordFreq = {};
+  const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'if', 'because', 'as', 'what', 'when', 'where', 'how', 'who', 'which', 'this', 'that', 'these', 'those', 'then', 'just', 'so', 'than', 'such', 'both', 'through', 'about', 'for', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'to', 'from', 'in', 'on', 'at', 'with', 'by', 'up', 'down', 'out', 'into', 'over', 'under', 'again', 'further', 'once', 'i', 'me', 'my', 'myself', 'we', 'us', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'very', 'can', 'will', 'shall', 'should', 'would', 'could', 'may', 'might', 'must']);
+
+  entries.forEach(entry => {
+    const words = entry.text.toLowerCase().match(/\b\w+\b/g) || [];
+    const count = words.length;
+    const binIndex = Math.min(count, 10);
+    wordCountBins[binIndex]++;
+
+    // For Common Words
+    words.forEach(w => {
+      if (w.length > 1 && !stopWords.has(w)) {
+        wordFreq[w] = (wordFreq[w] || 0) + 1;
+      }
+    });
+  });
+
+  // 3. MOST COMMON WORDS DATA
+  const topWords = Object.entries(wordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  // Render Stats Labels
   totalEntriesEl.textContent = entries.length;
   daysActiveEl.textContent = sortedDays.length;
   avgEntriesEl.textContent = (entries.length / sortedDays.length).toFixed(1);
 
-  const ctx = document.getElementById('statsChart').getContext('2d');
+  // --- CHART DEFAULTS ---
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = '#64748b';
 
-  // Create gradient for the line
-  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
-  gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
-
-  new Chart(ctx, {
+  // --- TIMELINE CHART ---
+  const ctx1 = document.getElementById('statsChart').getContext('2d');
+  const grad1 = ctx1.createLinearGradient(0, 0, 0, 400);
+  grad1.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
+  grad1.addColorStop(1, 'rgba(14, 165, 233, 0)');
+  new Chart(ctx1, {
     type: 'line',
     data: {
-      labels: labels,
+      labels: timelineLabels,
       datasets: [{
         label: 'Cumulative Entries',
-        data: counts,
+        data: timelineCounts,
         borderColor: '#0ea5e9',
         borderWidth: 4,
         pointBackgroundColor: '#ffffff',
         pointBorderColor: '#0ea5e9',
         pointBorderWidth: 2,
-        pointRadius: (context) => {
-          // Only show points for actual entry days or if it's the last day
-          const index = context.dataIndex;
-          // We need to check if the label at this index corresponds to a day with entries
-          // Actually, let's just show points every few days if there are many, or all if few.
-          return labels.length > 30 ? 0 : 4;
-        },
-        pointHoverRadius: 6,
-        backgroundColor: gradient,
+        pointRadius: timelineLabels.length > 30 ? 0 : 4,
+        backgroundColor: grad1,
         fill: true,
-        tension: 0.4 // Smooth curve
+        tension: 0.4
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index',
-      },
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          backgroundColor: '#1e293b',
-          titleFont: { family: 'Outfit', size: 14 },
-          bodyFont: { family: 'Inter', size: 13 },
-          padding: 12,
-          cornerRadius: 8,
-          displayColors: false
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            font: { family: 'Inter', size: 11 },
-            color: '#64748b',
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 10
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(226, 232, 240, 0.6)',
-            borderDash: [5, 5]
-          },
-          ticks: {
-            stepSize: 1,
-            font: { family: 'Inter', size: 11 },
-            color: '#64748b',
-            padding: 10
-          }
-        }
+        x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 10 } },
+        y: { beginAtZero: true, grid: { color: 'rgba(226, 232, 240, 0.6)', borderDash: [5, 5] } }
+      }
+    }
+  });
+
+  // --- WORD COUNT HISTOGRAM ---
+  const ctx2 = document.getElementById('wordCountChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'],
+      datasets: [{
+        label: 'Entries',
+        data: wordCountBins,
+        backgroundColor: 'rgba(14, 165, 233, 0.8)',
+        borderRadius: 8,
+        hoverBackgroundColor: '#0ea5e9'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  // --- COMMON WORDS CHART ---
+  const ctx3 = document.getElementById('commonWordsChart').getContext('2d');
+  new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: topWords.map(w => w[0]),
+      datasets: [{
+        label: 'Frequency',
+        data: topWords.map(w => w[1]),
+        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+        borderRadius: 8,
+        hoverBackgroundColor: '#6366f1'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1 } },
+        y: { grid: { display: false } }
       }
     }
   });

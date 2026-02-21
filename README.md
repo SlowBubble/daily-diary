@@ -1,4 +1,8 @@
 
+# m2b
+- In stats, also add
+  - a frequency histogram showing the number of words in each entry (max 10 words).
+  - a frequency histogram of the most common word among the entries (just do top 10 words).
 # m2a
 - In the view mode, if the user press "s", take the user to the stats page.
 - Create a stats.html page

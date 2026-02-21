@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   // 1. DATA PROCESSING
-  const dailyStats = {}; // { dayStr: { entries: 0, words: 0, categories: { name: count } } }
+  const dailyStats = {}; // Grouped by UTC 'YYYY-MM-DD'
   const categoriesFound = new Set();
 
   const wordCountBins = new Array(11).fill(0); // 0, 1, ..., 10+
@@ -87,42 +87,49 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const sortedDays = Object.keys(dailyStats).sort();
-  const firstDay = new Date(sortedDays[0]);
-  const lastDay = new Date();
-  const timelineLabels = [];
+  if (sortedDays.length === 0) return;
 
-  // Categorized Entry Data
+  const firstDayStr = sortedDays[0];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const timelineLabels = [];
   const categoryLines = {};
   categoriesFound.forEach(cat => { categoryLines[cat] = []; });
   const totalEntriesLine = [];
   const totalWordsLine = [];
 
   let cumulativeTotal = 0;
+  let cumulativeWords = 0;
   const cumulativeCategories = {};
   categoriesFound.forEach(cat => { cumulativeCategories[cat] = 0; });
 
-  let tempDate = firstDay;
-  tempDate.setHours(0, 0, 0, 0);
-  const end = new Date(lastDay);
-  end.setHours(0, 0, 0, 0);
+  // Use UTC dates to iterate through days reliably
+  let tempDate = new Date(firstDayStr + 'T00:00:00Z');
+  const endDate = new Date(todayStr + 'T00:00:00Z');
 
-  while (tempDate <= end) {
+  while (tempDate <= endDate) {
     const dayStr = tempDate.toISOString().split('T')[0];
     const stats = dailyStats[dayStr] || { entries: 0, words: 0, categories: {} };
 
-    timelineLabels.push(tempDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    // Label using UTC date
+    timelineLabels.push(tempDate.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC'
+    }));
 
     cumulativeTotal += stats.entries;
     totalEntriesLine.push(cumulativeTotal);
+
+    cumulativeWords += stats.words;
+    totalWordsLine.push(cumulativeWords);
 
     categoriesFound.forEach(cat => {
       cumulativeCategories[cat] += (stats.categories[cat] || 0);
       categoryLines[cat].push(cumulativeCategories[cat]);
     });
 
-    totalWordsLine.push(stats.words);
-
-    tempDate.setDate(tempDate.getDate() + 1);
+    tempDate.setUTCDate(tempDate.getUTCDate() + 1);
   }
 
   // 2. MOST COMMON WORDS DATA

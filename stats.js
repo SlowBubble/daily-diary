@@ -50,43 +50,35 @@ document.addEventListener('DOMContentLoaded', () => {
   // Sort entries by timestamp
   entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  // 1. TIMELINE DATA
-  const dayCounts = {};
-  entries.forEach(entry => {
-    const date = new Date(entry.timestamp);
-    const dayStr = date.toISOString().split('T')[0];
-    dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1;
-  });
-  const sortedDays = Object.keys(dayCounts).sort();
-  const firstDay = new Date(sortedDays[0]);
-  const lastDay = new Date();
-  const timelineLabels = [];
-  const timelineCounts = [];
-  let cumulative = 0;
-  let tempDate = new Date(firstDay);
-  tempDate.setHours(0, 0, 0, 0);
-  const end = new Date(lastDay);
-  end.setHours(0, 0, 0, 0);
-  while (tempDate <= end) {
-    const dayStr = tempDate.toISOString().split('T')[0];
-    cumulative += (dayCounts[dayStr] || 0);
-    timelineLabels.push(tempDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
-    timelineCounts.push(cumulative);
-    tempDate.setDate(tempDate.getDate() + 1);
-  }
+  // 1. DATA PROCESSING
+  const dailyStats = {}; // { dayStr: { entries: 0, words: 0, categories: { name: count } } }
+  const categoriesFound = new Set();
 
-  // 2. WORD COUNT HISTOGRAM DATA (max 10 words)
-  const wordCountBins = new Array(11).fill(0); // 0, 1, 2, ..., 10+
+  const wordCountBins = new Array(11).fill(0); // 0, 1, ..., 10+
   const wordFreq = {};
   const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'if', 'because', 'as', 'what', 'when', 'where', 'how', 'who', 'which', 'this', 'that', 'these', 'those', 'then', 'just', 'so', 'than', 'such', 'both', 'through', 'about', 'for', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'to', 'from', 'in', 'on', 'at', 'with', 'by', 'up', 'down', 'out', 'into', 'over', 'under', 'again', 'further', 'once', 'i', 'me', 'my', 'myself', 'we', 'us', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'very', 'can', 'will', 'shall', 'should', 'would', 'could', 'may', 'might', 'must']);
 
   entries.forEach(entry => {
+    const date = new Date(entry.timestamp);
+    const dayStr = date.toISOString().split('T')[0];
+    const category = entry.annotations?.category || 'Other';
     const words = entry.text.toLowerCase().match(/\b\w+\b/g) || [];
     const count = words.length;
+
+    categoriesFound.add(category);
+
+    if (!dailyStats[dayStr]) {
+      dailyStats[dayStr] = { entries: 0, words: 0, categories: {} };
+    }
+    dailyStats[dayStr].entries++;
+    dailyStats[dayStr].words += count;
+    dailyStats[dayStr].categories[category] = (dailyStats[dayStr].categories[category] || 0) + 1;
+
+    // Word Bins
     const binIndex = Math.min(count, 10);
     wordCountBins[binIndex]++;
 
-    // For Common Words
+    // Common Words
     words.forEach(w => {
       if (w.length > 1 && !stopWords.has(w)) {
         wordFreq[w] = (wordFreq[w] || 0) + 1;
@@ -94,13 +86,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 3. MOST COMMON WORDS DATA
+  const sortedDays = Object.keys(dailyStats).sort();
+  const firstDay = new Date(sortedDays[0]);
+  const lastDay = new Date();
+  const timelineLabels = [];
+
+  // Categorized Entry Data
+  const categoryLines = {};
+  categoriesFound.forEach(cat => { categoryLines[cat] = []; });
+  const totalEntriesLine = [];
+  const totalWordsLine = [];
+
+  let cumulativeTotal = 0;
+  const cumulativeCategories = {};
+  categoriesFound.forEach(cat => { cumulativeCategories[cat] = 0; });
+
+  let tempDate = firstDay;
+  tempDate.setHours(0, 0, 0, 0);
+  const end = new Date(lastDay);
+  end.setHours(0, 0, 0, 0);
+
+  while (tempDate <= end) {
+    const dayStr = tempDate.toISOString().split('T')[0];
+    const stats = dailyStats[dayStr] || { entries: 0, words: 0, categories: {} };
+
+    timelineLabels.push(tempDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+
+    cumulativeTotal += stats.entries;
+    totalEntriesLine.push(cumulativeTotal);
+
+    categoriesFound.forEach(cat => {
+      cumulativeCategories[cat] += (stats.categories[cat] || 0);
+      categoryLines[cat].push(cumulativeCategories[cat]);
+    });
+
+    totalWordsLine.push(stats.words);
+
+    tempDate.setDate(tempDate.getDate() + 1);
+  }
+
+  // 2. MOST COMMON WORDS DATA
   const topWords = Object.entries(wordFreq)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
-
-  console.log('Processed Word Count Bins:', wordCountBins);
-  console.log('Top Common Words:', topWords);
 
   // Render Stats Labels
   totalEntriesEl.textContent = entries.length;
@@ -111,25 +139,81 @@ document.addEventListener('DOMContentLoaded', () => {
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.color = '#64748b';
 
-  // --- TIMELINE CHART ---
+  // --- ENTRIES CHART (Categorized) ---
+  const categoryColors = {
+    'Meal': '#f59e0b',
+    'Activity': '#10b981',
+    'Thought': '#6366f1',
+    'Event': '#ec4899',
+    'Other': '#94a3b8'
+  };
+
   const ctx1 = document.getElementById('statsChart').getContext('2d');
-  const grad1 = ctx1.createLinearGradient(0, 0, 0, 400);
-  grad1.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
-  grad1.addColorStop(1, 'rgba(14, 165, 233, 0)');
+  const entryDatasets = [
+    {
+      label: 'Total',
+      data: totalEntriesLine,
+      borderColor: '#0ea5e9',
+      borderWidth: 4,
+      pointRadius: timelineLabels.length > 30 ? 0 : 4,
+      tension: 0.4,
+      fill: false,
+      borderDash: [] // Solid line for total
+    },
+    ...Array.from(categoriesFound).map(cat => ({
+      label: cat,
+      data: categoryLines[cat],
+      borderColor: categoryColors[cat] || '#94a3b8',
+      borderWidth: 2,
+      pointRadius: timelineLabels.length > 30 ? 0 : 2,
+      tension: 0.4,
+      fill: false
+    }))
+  ];
+
   new Chart(ctx1, {
     type: 'line',
     data: {
       labels: timelineLabels,
+      datasets: entryDatasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { usePointStyle: true, boxWidth: 6, padding: 20 }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 10 } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(226, 232, 240, 0.6)', borderDash: [5, 5] } }
+      }
+    }
+  });
+
+  // --- WORDS CHART ---
+  const ctxWords = document.getElementById('wordsChart').getContext('2d');
+  const wordGrad = ctxWords.createLinearGradient(0, 0, 0, 400);
+  wordGrad.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
+  wordGrad.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+  new Chart(ctxWords, {
+    type: 'line',
+    data: {
+      labels: timelineLabels,
       datasets: [{
-        label: 'Cumulative Entries',
-        data: timelineCounts,
-        borderColor: '#0ea5e9',
+        label: 'Total Words',
+        data: totalWordsLine,
+        borderColor: '#6366f1',
         borderWidth: 4,
         pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#0ea5e9',
+        pointBorderColor: '#6366f1',
         pointBorderWidth: 2,
         pointRadius: timelineLabels.length > 30 ? 0 : 4,
-        backgroundColor: grad1,
+        backgroundColor: wordGrad,
         fill: true,
         tension: 0.4
       }]

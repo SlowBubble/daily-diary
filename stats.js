@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const entries = diaryData.entries || [];
+  console.log('Diary entries loaded:', entries.length, entries);
+
   if (entries.length === 0) {
+    console.warn('No entries found for storage key:', storageKey);
     totalEntriesEl.textContent = '0';
     daysActiveEl.textContent = '0';
     avgEntriesEl.textContent = '0';
@@ -87,6 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const topWords = Object.entries(wordFreq)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
+
+  console.log('Processed Word Count Bins:', wordCountBins);
+  console.log('Top Common Words:', topWords);
 
   // Render Stats Labels
   totalEntriesEl.textContent = entries.length;

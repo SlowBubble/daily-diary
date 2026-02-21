@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateHeader() {
         const count = diaryData.entries.length;
         const baseTitle = userIdParam ? `${userIdParam}'s Diary` : 'My diary';
-        userTitle.textContent = `${baseTitle} (${count} posts)`;
+        const statsUrl = `stats.html${window.location.search}`;
+        userTitle.innerHTML = `${baseTitle} <a href="${statsUrl}" class="stats-link">(${count} posts)</a>`;
     }
 
     const appContainer = document.querySelector('.app-container');

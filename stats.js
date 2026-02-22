@@ -58,9 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const wordFreq = {};
   const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'if', 'because', 'as', 'what', 'when', 'where', 'how', 'who', 'which', 'this', 'that', 'these', 'those', 'then', 'just', 'so', 'than', 'such', 'both', 'through', 'about', 'for', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'to', 'from', 'in', 'on', 'at', 'with', 'by', 'up', 'down', 'out', 'into', 'over', 'under', 'again', 'further', 'once', 'i', 'me', 'my', 'myself', 'we', 'us', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'very', 'can', 'will', 'shall', 'should', 'would', 'could', 'may', 'might', 'must']);
 
+  // Helper to get local YYYY-MM-DD
+  const getLocalDateStr = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   entries.forEach(entry => {
     const date = new Date(entry.timestamp);
-    const dayStr = date.toISOString().split('T')[0];
+    const dayStr = getLocalDateStr(date);
     const category = entry.annotations?.category || 'Other';
     const words = entry.text.toLowerCase().match(/\b\w+\b/g) || [];
     const count = words.length;
@@ -87,12 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const sortedDays = Object.keys(dailyStats).sort();
-  console.log('Daily stats grouped:', dailyStats);
+  console.log('Daily stats grouped (local):', dailyStats);
   if (sortedDays.length === 0) return;
 
   const firstDayStr = sortedDays[0];
-  const todayStr = new Date().toISOString().split('T')[0];
-  console.log('Timeline range:', firstDayStr, 'to', todayStr);
+  const todayStr = getLocalDateStr(new Date());
 
   const timelineLabels = [];
   const categoryLines = {};
@@ -105,23 +112,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const cumulativeCategories = {};
   categoriesFound.forEach(cat => { cumulativeCategories[cat] = 0; });
 
-  // Use UTC dates to iterate through days reliably
+  // Use local dates to iterate through days reliably
+  // Parse firstDayStr as local date
+  const [y, m, d] = firstDayStr.split('-').map(Number);
+  let tempDate = new Date(y, m - 1, d);
   // Start one day before the first non-zero entry so line starts from origin
-  let entryStartDate = new Date(firstDayStr + 'T00:00:00Z');
-  let tempDate = new Date(entryStartDate);
-  tempDate.setUTCDate(tempDate.getUTCDate() - 1);
+  tempDate.setDate(tempDate.getDate() - 1);
 
-  const endDate = new Date(todayStr + 'T00:00:00Z');
+  const [ty, tm, td] = todayStr.split('-').map(Number);
+  const endDate = new Date(ty, tm - 1, td);
 
   while (tempDate <= endDate) {
-    const dayStr = tempDate.toISOString().split('T')[0];
+    const dayStr = getLocalDateStr(tempDate);
     const stats = dailyStats[dayStr] || { entries: 0, words: 0, categories: {} };
 
-    // Label using UTC date
+    // Label using local date
     timelineLabels.push(tempDate.toLocaleDateString(undefined, {
       month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC'
+      day: 'numeric'
     }));
 
     cumulativeTotal += stats.entries;
@@ -135,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
       categoryLines[cat].push(cumulativeCategories[cat]);
     });
 
-    tempDate.setUTCDate(tempDate.getUTCDate() + 1);
+    tempDate.setDate(tempDate.getDate() + 1);
   }
 
   console.log('Processed Timeline Labels:', timelineLabels);

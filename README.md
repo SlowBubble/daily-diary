@@ -17,13 +17,7 @@ This is the firebase config you can use from my other project (I wonder if I can
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAAG4cgpGXTDFdKxCwxpEiIm0xsjKDdy3I",
-  authDomain: "diagram-flow.firebaseapp.com",
-  projectId: "diagram-flow",
-  storageBucket: "diagram-flow.firebasestorage.app",
-  messagingSenderId: "701657640541",
-  appId: "1:701657640541:web:fa9d373423f009c60627b4",
-  measurementId: "G-RJZ7XPTE4Z"
+  ...
 };
 
 const app = initializeApp(firebaseConfig);

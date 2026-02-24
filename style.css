@@ -213,9 +213,15 @@ body {
   letter-spacing: 0.05em;
   background: #f1f5f9;
   color: #64748b;
+  cursor: pointer;
+  transition: filter 0.2s;
 }
 
-.category-food {
+.annotation-category:hover {
+  filter: brightness(0.95);
+}
+
+.category-meal {
   background: #fee2e2;
   color: #b91c1c;
 }

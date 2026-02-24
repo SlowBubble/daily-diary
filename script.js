@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userTitle = document.getElementById('user-title');
     const entriesList = document.getElementById('entries-list');
     const diaryInput = document.getElementById('diary-input');
+    const categories = ["Meal", "Activity", "Thought", "Event", "Other"];
 
     function updateHeader() {
         const count = diaryData.entries.length;
@@ -211,7 +212,7 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
             }
 
             const categoryHtml = entry.annotations ? `
-                <span class="annotation-category category-${entry.annotations.category.toLowerCase()}">${entry.annotations.category}</span>
+                <span class="annotation-category category-${entry.annotations.category.toLowerCase()}" title="Click to cycle category">${entry.annotations.category}</span>
             ` : '';
 
             const displayText = (cantoMode && entry.annotations && entry.annotations.canto)
@@ -253,6 +254,19 @@ Return ONLY the JSON object. Example: {"canto": "...", "category": "..."}`;
                 localStorage.setItem(storageKey, JSON.stringify(diaryData));
                 renderEntries();
             });
+
+            const annotationTag = entryDiv.querySelector('.annotation-category');
+            if (annotationTag) {
+                annotationTag.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const currentCategory = entry.annotations.category;
+                    const currentIndex = categories.indexOf(currentCategory);
+                    const nextIndex = (currentIndex + 1) % categories.length;
+                    entry.annotations.category = categories[nextIndex];
+                    localStorage.setItem(storageKey, JSON.stringify(diaryData));
+                    renderEntries();
+                });
+            }
 
             entriesList.appendChild(entryDiv);
         });

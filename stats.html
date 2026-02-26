@@ -31,6 +31,13 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 3rem;
+      gap: 2rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
     }
 
     .chart-outer-wrapper {
@@ -93,6 +100,18 @@
       height: 18px;
     }
 
+    .canto-back-btn {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-color: #bae6fd;
+      color: #0369a1;
+    }
+
+    .canto-back-btn:hover {
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      border-color: #7dd3fc;
+      color: #0c4a6e;
+    }
+
     .stat-card {
       margin-top: 2rem;
       display: grid;
@@ -146,13 +165,18 @@
           style="font-family: 'Outfit', sans-serif; font-size: 2.75rem; font-weight: 700; color: #0f172a; letter-spacing: -0.03em;">Your
           Stats</span>
       </h1>
-      <a href="index.html" id="back-link" class="back-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-        Back to Diary
-      </a>
+      <div class="header-actions">
+        <a href="index.html" id="back-link" class="back-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back to Diary
+        </a>
+        <a href="index.html?canto=1" id="canto-back-link" class="back-btn canto-back-btn">
+          Canto
+        </a>
+      </div>
     </header>
 
     <div class="stat-card">

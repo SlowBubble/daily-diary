@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const userTitle = document.getElementById('user-title');
   const backLink = document.getElementById('back-link');
+  const cantoBackLink = document.getElementById('canto-back-link');
   const totalEntriesEl = document.getElementById('total-entries');
   const daysActiveEl = document.getElementById('days-active');
   const avgEntriesEl = document.getElementById('avg-entries');
@@ -19,8 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Update back link with user_id
+  // Update back links with user_id and mode
   backLink.href = `index.html${window.location.search}`;
+
+  const cantoParams = new URLSearchParams(window.location.search);
+  cantoParams.set('canto', '1');
+  cantoBackLink.href = `index.html?${cantoParams.toString()}`;
 
   const baseTitle = userIdParam ? `${userIdParam}'s Stats` : 'My Stats';
   userTitle.textContent = baseTitle;
